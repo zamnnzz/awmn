@@ -4254,11 +4254,9 @@ button,input,select{
 
     function openLevels(){
       const signedIn = Boolean(window.googleProgress?.currentUser);
+      const skipped = sessionStorage.getItem("skipGoogleLoginForSession") === "true";
 
-      if(!signedIn){
-        const message = document.getElementById("googleAuthMessage");
-        if(message) message.textContent = "";
-
+      if(!signedIn && !skipped){
         document.getElementById("googleAuthOverlay")?.classList.add("show");
         return;
       }
@@ -4267,8 +4265,344 @@ button,input,select{
     }
 
     window.continueWithoutGoogle = function(){
+      sessionStorage.setItem("skipGoogleLoginForSession", "true");
       document.getElementById("googleAuthOverlay")?.classList.remove("show");
       openLevelsImmediately();
+    }
+
+    function openGroupSetup(){
+      homePage.classList.remove("active");
+      levelsPage.classList.remove("active");
+      const hb3=document.getElementById("activeHintBanner"); if(hb3) hb3.classList.remove("show");
+      gamePage.classList.remove("hint-active");
+      closeHintMenu();
+      groupPage.classList.add("active");
+      document.getElementById("groupMessage").textContent = "";
+      window.scrollTo({top:0, behavior:"instant"});
+      setTimeout(() => document.getElementById("teamOne").focus(), 100);
+    }
+
+    function goHome(){
+      awaitingHostConnection = false;
+      levelsPage.classList.remove("active");
+      groupPage.classList.remove("active");
+      gamePage.classList.remove("active");
+      gamePage.classList.remove("hint-active");
+      gamePage.classList.remove("individual-game");
+      gamePage.style.display = "none";
+      resetActiveHintDisplay();
+      const hb=document.getElementById("activeHintBanner"); if(hb) hb.classList.remove("show");
+      closeHintMenu();
+      homePage.classList.add("active");
+      window.scrollTo({top:0, behavior:"instant"});
+    }
+
+
+    window.updateReturnSessionButton = function updateReturnSessionButton(){
+      const button = document.getElementById("returnSessionButton");
+      if(!button) return;
+
+      const hasSavedSession =
+        Boolean(localStorage.getItem("activeFirebaseSessionId"));
+
+      button.style.display = hasSavedSession ? "block" : "none";
+    }
+
+    async function returnToSavedSession(){
+      const savedId = localStorage.getItem("activeFirebaseSessionId");
+      const message = document.getElementById("groupMessage");
+
+      if(!savedId || !window.firebaseGame){
+        if(message){
+          message.style.color = "#b42318";
+          message.textContent = "لا توجد جلسة محفوظة";
+        }
+        updateReturnSessionButton();
+        return;
+      }
+
+      try{
+        await window.firebaseGame.restoreSession(savedId);
+
+        awaitingHostConnection = false;
+        hostConnectionHandled = false;
+        hostPairPage?.classList.remove("active");
+        groupPage.classList.remove("active");
+
+        openGame("group");
+
+        if(message){
+          message.style.color = window.firebaseGame.hostOnline
+            ? "#16833b"
+            : "#8a4c22";
+
+          message.textContent = window.firebaseGame.hostOnline
+            ? "تمت العودة للجلسة — الهوست متصل"
+            : "تمت العودة للجلسة — الهوست غير متصل";
+        }
+      }catch(error){
+        localStorage.removeItem("activeFirebaseSessionId");
+        updateReturnSessionButton();
+
+        if(message){
+          message.style.color = "#b42318";
+          message.textContent = "الجلسة المحفوظة غير موجودة";
+        }
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", updateReturnSessionButton);
+
+    async function createRoom(event){
+      event.preventDefault();
+
+      const teamOne = document.getElementById("teamOne").value.trim();
+      const teamTwo = document.getElementById("teamTwo").value.trim();
+      const message = document.getElementById("groupMessage");
+
+      if(!teamOne || !teamTwo){
+        message.textContent = "اكتب اسم الفريقين أولاً";
+        return;
+      }
+
+      if(teamOne === teamTwo){
+        message.textContent = "لازم يكون اسم كل فريق مختلف";
+        return;
+      }
+
+      localStorage.setItem("teamOne", teamOne);
+      localStorage.setItem("teamTwo", teamTwo);
+
+      let restoredExistingSession = false;
+
+      if(window.firebaseGame){
+        try{
+          const sessionResult =
+            await window.firebaseGame.createSession(teamOne, teamTwo, true);
+
+          restoredExistingSession = false;
+        }catch(error){
+          message.style.color = "#b42318";
+          message.textContent = "تعذر إنشاء جلسة Firebase: " + error.message;
+          return;
+        }
+      }
+      // الجلسة محفوظة للعودة إليها لاحقًا.
+
+      message.style.color = "#16833b";
+      message.textContent = "تم إنشاء الغرفة: " + teamOne + " ضد " + teamTwo;
+
+      setTimeout(() => {
+        if(restoredExistingSession){
+          // عند العودة للجلسة المحفوظة لا نفرض ظهور الباركود.
+          hostPairPage?.classList.remove("active");
+
+          if(window.firebaseGame?.hostOnline === true){
+            handleHostConnected();
+          }else{
+            groupPage.classList.add("active");
+            message.style.color = "#8a4c22";
+            message.textContent = "الجلسة محفوظة — الهوست غير متصل";
+          }
+
+          window.scrollTo({top:0, behavior:"instant"});
+          return;
+        }
+
+        if(!resolveHostPages()){
+          message.style.color = "#b42318";
+          message.textContent = "تعذر فتح صفحة الباركود";
+          return;
+        }
+
+        homePage.classList.remove("active");
+        levelsPage.classList.remove("active");
+        groupPage.classList.remove("active");
+        gamePage.classList.remove("active");
+        hostControlPage.classList.remove("active");
+
+        document.body.style.overflow = "";
+        hostConnectionHandled = false;
+        awaitingHostConnection = true;
+        hostPairPage.classList.add("active");
+
+        document.getElementById("hostControlLink").textContent = getHostLink();
+        const playerLink = document.getElementById("playerControlLink");
+        if(playerLink) playerLink.textContent = getPlayerLink();
+        buildFakeQr();
+
+        window.scrollTo({top:0, behavior:"instant"});
+      }, 120);
+    }
+
+    function selectLevel(number){
+      if(number > unlockedLevel) return;
+      currentLevel = number;
+      openGame("single", number);
+    }
+
+
+    function resetActiveHintDisplay(){
+      const banner = document.getElementById("activeHintBanner");
+
+      if(banner){
+        banner.classList.remove("show");
+      }
+
+      gamePage.classList.remove("hint-active");
+
+      const title = document.getElementById("activeHintTitle");
+      const text = document.getElementById("activeHintText");
+      const icon = document.getElementById("activeHintIcon");
+
+      if(title) title.textContent = "التلميح";
+      if(text) text.textContent = "";
+      if(icon) icon.textContent = "💡";
+
+      closeHintMenu();
+    }
+
+    function openGame(mode, level = 1){
+      resetActiveHintDisplay();
+      gamePage.style.display = "";
+      currentGameMode = mode;
+      currentLevel = level;
+
+      homePage.classList.remove("active");
+      levelsPage.classList.remove("active");
+      groupPage.classList.remove("active");
+      gamePage.classList.add("active");
+
+      gamePage.classList.remove("individual-game");
+      if(mode === "single"){
+        gamePage.classList.add("individual-game");
+      }
+
+      if(mode === "group"){
+        document.getElementById("gameTeamOne").textContent =
+          localStorage.getItem("teamOne") || "الفريق الأول";
+        document.getElementById("gameTeamTwo").textContent =
+          localStorage.getItem("teamTwo") || "الفريق الثاني";
+      }
+
+      document.getElementById("scoreOne").textContent = "0";
+      document.getElementById("scoreTwo").textContent = "0";
+
+      if(mode === "single"){
+        questionHintUsage = {language:false, text:false};
+        document.getElementById("activeHintBanner").classList.remove("show");
+        gamePage.classList.remove("hint-active");
+
+        currentQuestion = Math.min(
+          Math.max(1, questionBank.length),
+          Math.max(1, currentLevel)
+        );
+        totalQuestions = Math.max(1, questionBank.length);
+
+        renderCurrentQuestion();
+        buildAnswerBoxes(getCurrentAnswer());
+      }else{
+        document.getElementById("answerBoxes").innerHTML = "";
+        document.getElementById("answerFeedback").textContent = "";
+      }
+      if(mode === "group"){
+        const savedQuestion = Number(localStorage.getItem("activeGroupQuestion")) || 1;
+        currentQuestion = Math.min(questionBank.length, Math.max(1, savedQuestion));
+        totalQuestions = Math.max(1, questionBank.length);
+        renderGroupQuestion();
+      }else{
+        currentQuestion = Math.min(
+          Math.max(1, questionBank.length),
+          Math.max(1, currentLevel)
+        );
+        totalQuestions = Math.max(1, questionBank.length);
+      }
+
+      document.getElementById("questionProgress").textContent = currentQuestion + "/" + totalQuestions;
+
+      if(mode === "group"){
+        setTimeout(() => syncCurrentQuestionToFirebase().catch(() => {}), 0);
+      }
+
+      window.scrollTo({top:0, behavior:"instant"});
+    }
+
+    function backFromGame(){
+      awaitingHostConnection = false;
+      gamePage.classList.remove("active");
+      gamePage.classList.remove("individual-game");
+      gamePage.style.display = "none";
+      gamePage.classList.remove("hint-active");
+
+      const hintBanner = document.getElementById("activeHintBanner");
+      if(hintBanner){
+        hintBanner.classList.remove("show");
+      }
+
+      closeHintMenu();
+
+      if(currentGameMode === "group"){
+        localStorage.setItem("activeGroupQuestion", String(currentQuestion));
+        groupPage.classList.add("active");
+        const message = document.getElementById("groupMessage");
+        if(message){
+          const hostOnline = window.firebaseGame?.hostOnline === true;
+          message.style.color = hostOnline ? "#16833b" : "#8a4c22";
+          message.textContent = hostOnline
+            ? "الجلسة محفوظة — الهوست متصل"
+            : "الجلسة محفوظة — الهوست غير متصل";
+        }
+      }else{
+        levelsPage.classList.add("active");
+      }
+
+      window.scrollTo({top:0, behavior:"instant"});
+    }
+
+
+
+
+    function createAnswerVisualHtml(answer){
+      const safeAnswer = String(answer || "").replace(/[&<>"']/g, char => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      })[char]);
+
+      return `
+        <div class="answer-image-visual" style="width:100%;height:100%;display:flex;
+             align-items:center;justify-content:center;background:#fff">
+          <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg"
+               style="width:100%;height:100%;display:block">
+            <rect x="8" y="8" width="884" height="404" rx="34"
+                  fill="#fff8dc" stroke="#111" stroke-width="8"/>
+            <text x="450" y="150" text-anchor="middle" direction="rtl"
+                  font-family="Tahoma,Arial,sans-serif" font-size="48"
+                  font-weight="900" fill="#37483d">الإجابة</text>
+            <text x="450" y="285" text-anchor="middle" direction="rtl"
+                  font-family="Tahoma,Arial,sans-serif" font-size="78"
+                  font-weight="900" fill="#111">${safeAnswer}</text>
+          </svg>
+        </div>`;
+    }
+
+
+    window.showGameBuzzerWinner = function(playerName, teamName, lockedUntil){
+      const banner = document.getElementById("buzzerWinnerBanner");
+      const text = document.getElementById("buzzerWinnerText");
+      if(!banner || !text) return;
+
+      text.textContent = String(playerName || "") + " — " + String(teamName || "");
+      banner.style.display = "block";
+      banner.style.opacity = "1";
+      banner.style.visibility = "visible";
+      banner.style.transform = "translateX(-50%) translateY(0)";
+
+      clearTimeout(window.__buzzerBannerTimer);
+      const delay = Math.max(500, Number(lockedUntil || 0) - Date.now());
+      window.__buzzerBannerTimer = setTimeout(() => {
+        banner.style.opacity = "0";
+        banner.style.visibility = "hidden";
+        banner.style.transform = "translateX(-50%) translateY(-20px)";
+      }, delay);
     };
 
 
@@ -6010,13 +6344,7 @@ function updateGoogleAccountUI(user){
 
 window.loginWithGoogle = async function(){
   const message = document.getElementById("googleAuthMessage");
-  const loginButton = document.querySelector(".google-login-btn");
-
   if(message) message.textContent = "";
-  if(loginButton){
-    loginButton.disabled = true;
-    loginButton.textContent = "جاري فتح Google...";
-  }
 
   try{
     const result = await signInWithPopup(auth, googleProvider);
@@ -6031,39 +6359,15 @@ window.loginWithGoogle = async function(){
       await saveGoogleProgress();
     }
 
+    sessionStorage.removeItem("skipGoogleLoginForSession");
     document.getElementById("googleAuthOverlay")?.classList.remove("show");
     openLevelsImmediately();
   }catch(error){
-    console.error("Google sign-in error:", error);
-
-    const code = String(error?.code || "");
-    let errorText = "تعذر تسجيل الدخول بحساب Google.";
-
-    if(code === "auth/popup-blocked"){
-      errorText = "المتصفح منع نافذة Google. اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى.";
-    }else if(code === "auth/popup-closed-by-user"){
-      errorText = "تم إغلاق نافذة تسجيل Google قبل إكمال الدخول.";
-    }else if(code === "auth/unauthorized-domain"){
-      errorText = "نطاق الموقع غير مضاف في Firebase. أضف نطاق Vercel داخل Authorized domains.";
-    }else if(code === "auth/operation-not-allowed"){
-      errorText = "تسجيل Google غير مفعّل في Firebase Authentication.";
-    }else if(code === "auth/cancelled-popup-request"){
-      errorText = "تم فتح أكثر من نافذة تسجيل. انتظر قليلًا ثم حاول مرة واحدة.";
-    }else if(code === "auth/network-request-failed"){
-      errorText = "تعذر الاتصال بـ Firebase. تحقق من الإنترنت ثم حاول مرة أخرى.";
-    }else if(code === "auth/account-exists-with-different-credential"){
-      errorText = "البريد مرتبط بطريقة دخول مختلفة في Firebase.";
-    }else if(code === "auth/internal-error"){
-      errorText = "حدث خطأ داخلي في Firebase. راجع إعدادات Authentication.";
-    }
-
     if(message){
-      message.textContent = errorText + (code ? " (" + code + ")" : "");
-    }
-  }finally{
-    if(loginButton){
-      loginButton.disabled = false;
-      loginButton.textContent = "الدخول باستخدام Google";
+      message.textContent =
+        error?.code === "auth/popup-blocked"
+          ? "اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى."
+          : "تعذر تسجيل الدخول بحساب Google.";
     }
   }
 };
@@ -6074,7 +6378,7 @@ window.logoutGoogleAccount = async function(){
 
   window.googleProgress.currentUser = null;
   updateGoogleAccountUI(null);
-  
+  sessionStorage.removeItem("skipGoogleLoginForSession");
   goHome();
 };
 
@@ -6179,9 +6483,6 @@ window.firebaseGame = {
     <div class="google-auth-card">
       <h2>حفظ تقدم الفردي</h2>
       <p>سجّل دخولك بحساب Google لحفظ المراحل والتلميحات واستعادتها من أي جهاز.</p>
-      <small style="display:block;line-height:1.6;margin-bottom:8px">
-        يجب تفعيل Google في Firebase وإضافة نطاق الموقع ضمن Authorized domains.
-      </small>
       <button class="google-login-btn" type="button" onclick="loginWithGoogle()">الدخول باستخدام Google</button>
       <button class="google-skip-btn" type="button" onclick="continueWithoutGoogle()">المتابعة بدون حساب</button>
       <p id="googleAuthMessage" style="margin-top:12px;color:#b42318"></p>
