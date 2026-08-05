@@ -3406,6 +3406,44 @@ button,input,select{
   .individual-game .picture-card{aspect-ratio:1.25/1;}
 }
 
+
+/* v79 — حساب Google وحفظ تقدم الفردي */
+.google-auth-overlay{
+  display:none;position:fixed;inset:0;z-index:2147483500;
+  align-items:center;justify-content:center;padding:18px;
+  background:rgba(20,20,24,.72);backdrop-filter:blur(5px)
+}
+.google-auth-overlay.show{display:flex}
+.google-auth-card{
+  width:min(94vw,430px);padding:26px;text-align:center;
+  background:#fff8d8;border:3px solid #111;border-radius:24px;
+  box-shadow:0 9px 0 #111
+}
+.google-auth-card h2{margin:0 0 10px;font-size:28px}
+.google-auth-card p{margin:0 0 16px;line-height:1.7;font-weight:700}
+.google-login-btn,.google-skip-btn{
+  width:100%;min-height:54px;margin-top:10px;border:3px solid #111;
+  border-radius:14px;font-size:18px;font-weight:900;cursor:pointer
+}
+.google-login-btn{background:#fff}.google-skip-btn{background:#eee}
+.google-account-bar{
+  display:none;width:min(92%,560px);margin:12px auto 18px;padding:10px 12px;
+  align-items:center;gap:10px;background:#fff;border:2px solid #111;border-radius:14px
+}
+.google-account-bar.show{display:flex}
+.google-account-bar img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #111}
+.google-account-info{flex:1;min-width:0;text-align:right}
+.google-account-info strong,.google-account-info small{
+  display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.google-logout-btn{
+  min-height:40px;padding:0 13px;border:2px solid #111;border-radius:10px;
+  background:#ffdddd;font-weight:900;cursor:pointer
+}
+@media(max-width:560px){
+  .google-auth-card{padding:20px 16px}.google-auth-card h2{font-size:24px}
+}
+
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -3471,6 +3509,15 @@ button,input,select{
       <button class="back-btn" type="button" onclick="goHome()" aria-label="رجوع">↩</button>
       <h1>المراحل</h1>
     </header>
+    <div id="googleAccountBar" class="google-account-bar">
+      <img id="googleUserPhoto" alt="صورة الحساب">
+      <div class="google-account-info">
+        <strong id="googleUserName">مستخدم Google</strong>
+        <small id="googleUserEmail"></small>
+      </div>
+      <button class="google-logout-btn" type="button" onclick="logoutGoogleAccount()">تسجيل خروج</button>
+    </div>
+
 
     <div id="levelsGrid" class="levels-grid" aria-label="قائمة المراحل"></div>
   </section>
@@ -3888,63 +3935,37 @@ button,input,select{
 
       return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
     }
-const questionBank = [
-  { imageUrl: "img/1.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/2.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/3.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/4.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/5.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/6.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/7.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/8.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/9.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/10.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/11.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/12.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/13.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/14.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/15.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/16.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/17.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/18.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/19.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/20.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/21.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/22.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/23.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/24.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/25.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/26.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/27.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/28.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/29.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/30.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/31.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/32.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/33.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/34.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/35.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/36.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/37.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/38.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/39.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/40.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/41.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/42.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/43.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/44.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/45.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/46.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/47.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/48.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/49.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/50.png", answer: "", hint: "", language: "عربي" }
-];
 
-unlockedLevel = Math.min(
-  Math.max(1, questionBank.length),
-  Math.max(1, unlockedLevel)
-);
+    const questionBank = [
+      {
+        imageUrl: makeEmojiImage("🍯"),
+        answer: "عسل",
+        hint: "مادة حلوة يصنعها النحل",
+        language: "عربي"
+      },
+      {
+        imageUrl: makeEmojiImage("🌙", "#e9f1ff"),
+        answer: "قمر",
+        hint: "يظهر في السماء ليلًا",
+        language: "عربي"
+      },
+      {
+        imageUrl: makeEmojiImage("☀️", "#fff1a8"),
+        answer: "شمس",
+        hint: "تضيء الأرض في النهار",
+        language: "عربي"
+      },
+      {
+        imageUrl: makeEmojiImage("📖", "#edf8e8"),
+        answer: "كتاب",
+        hint: "نقرأ منه ونتعلم",
+        language: "عربي"
+      }
+    ];
+    unlockedLevel = Math.min(
+      Math.max(1, questionBank.length),
+      Math.max(1, unlockedLevel)
+    );
 
 
     function escapeHtml(value){
@@ -4217,7 +4238,8 @@ unlockedLevel = Math.min(
       }
     }
 
-    function openLevels(){
+
+    function openLevelsImmediately(){
       gamePage.classList.remove("active");
       gamePage.classList.remove("individual-game");
       gamePage.style.display = "none";
@@ -4228,6 +4250,24 @@ unlockedLevel = Math.min(
       closeHintMenu();
       levelsPage.classList.add("active");
       window.scrollTo({top:0, behavior:"instant"});
+    }
+
+    function openLevels(){
+      const signedIn = Boolean(window.googleProgress?.currentUser);
+      const skipped = sessionStorage.getItem("skipGoogleLoginForSession") === "true";
+
+      if(!signedIn && !skipped){
+        document.getElementById("googleAuthOverlay")?.classList.add("show");
+        return;
+      }
+
+      openLevelsImmediately();
+    }
+
+    window.continueWithoutGoogle = function(){
+      sessionStorage.setItem("skipGoogleLoginForSession", "true");
+      document.getElementById("googleAuthOverlay")?.classList.remove("show");
+      openLevelsImmediately();
     }
 
     function openGroupSetup(){
@@ -4844,7 +4884,9 @@ unlockedLevel = Math.min(
     function rewardRandomHintAfterTwoAnswers(){
       fastAnswerProgress += 1;
       localStorage.setItem("fastAnswerProgress", String(fastAnswerProgress));
+      window.googleProgress?.save?.().catch(() => {});
       localStorage.setItem("fastAnswerTarget", String(fastAnswerTarget));
+      window.googleProgress?.save?.().catch(() => {});
 
       if(fastAnswerProgress < fastAnswerTarget){
         return;
@@ -4855,6 +4897,7 @@ unlockedLevel = Math.min(
 
       localStorage.setItem("fastAnswerProgress", "0");
       localStorage.setItem("fastAnswerTarget", String(fastAnswerTarget));
+      window.googleProgress?.save?.().catch(() => {});
 
       const availableTypes = ["language","text","letter"].filter(type => {
         return hintBalances[type] < hintMaxBalances[type];
@@ -4930,6 +4973,7 @@ unlockedLevel = Math.min(
           currentLevel + 1
         );
         localStorage.setItem("unlockedLevel", String(unlockedLevel));
+      window.googleProgress?.save?.().catch(() => {});
         buildLevels();
         setTimeout(playUnlockSound, 300);
       }
@@ -4970,11 +5014,15 @@ unlockedLevel = Math.min(
     });
 
     localStorage.setItem("hintBalances", JSON.stringify(hintBalances));
+      window.googleProgress?.save?.().catch(() => {});
     localStorage.setItem("hintCooldowns", JSON.stringify(hintCooldowns));
+      window.googleProgress?.save?.().catch(() => {});
 
     function saveHintBalances(){
       localStorage.setItem("hintBalances", JSON.stringify(hintBalances));
+      window.googleProgress?.save?.().catch(() => {});
       localStorage.setItem("hintCooldowns", JSON.stringify(hintCooldowns));
+      window.googleProgress?.save?.().catch(() => {});
     }
 
     function formatHintTime(totalSeconds){
@@ -5780,7 +5828,7 @@ unlockedLevel = Math.min(
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
   getDatabase, ref, set, update, onValue, get, goOnline, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
@@ -6204,6 +6252,151 @@ async function restoreSession(savedId){
   };
 }
 
+
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({prompt:"select_account"});
+
+window.googleProgress = {
+  currentUser: null,
+  save: async () => {},
+  load: async () => null
+};
+
+async function loadGoogleProgress(user){
+  if(!user || user.isAnonymous) return null;
+  const snapshot = await get(ref(db, "users/" + user.uid + "/progress"));
+  return snapshot.exists() ? snapshot.val() : null;
+}
+
+async function saveGoogleProgress(){
+  const user = auth.currentUser;
+  if(!user || user.isAnonymous) return;
+
+  await update(ref(db, "users/" + user.uid), {
+    profile: {
+      name: user.displayName || "",
+      email: user.email || "",
+      photoURL: user.photoURL || ""
+    },
+    progress: {
+      unlockedLevel: Math.max(1, Number(unlockedLevel) || 1),
+      hintBalances,
+      hintCooldowns,
+      fastAnswerProgress: Math.max(0, Number(fastAnswerProgress) || 0),
+      fastAnswerTarget: Math.max(1, Number(fastAnswerTarget) || 3),
+      updatedAt: Date.now()
+    }
+  });
+}
+
+async function applyGoogleProgress(progress){
+  if(!progress) return;
+
+  unlockedLevel = Math.min(
+    Math.max(1, questionBank.length),
+    Math.max(1, Number(progress.unlockedLevel) || 1)
+  );
+
+  if(progress.hintBalances && typeof progress.hintBalances === "object"){
+    hintBalances = progress.hintBalances;
+  }
+  if(progress.hintCooldowns && typeof progress.hintCooldowns === "object"){
+    hintCooldowns = progress.hintCooldowns;
+  }
+
+  fastAnswerProgress = Math.max(0, Number(progress.fastAnswerProgress) || 0);
+  fastAnswerTarget = Math.max(1, Number(progress.fastAnswerTarget) || 3);
+
+  localStorage.setItem("unlockedLevel", String(unlockedLevel));
+      window.googleProgress?.save?.().catch(() => {});
+  localStorage.setItem("hintBalances", JSON.stringify(hintBalances));
+      window.googleProgress?.save?.().catch(() => {});
+  localStorage.setItem("hintCooldowns", JSON.stringify(hintCooldowns));
+      window.googleProgress?.save?.().catch(() => {});
+  localStorage.setItem("fastAnswerProgress", String(fastAnswerProgress));
+      window.googleProgress?.save?.().catch(() => {});
+  localStorage.setItem("fastAnswerTarget", String(fastAnswerTarget));
+      window.googleProgress?.save?.().catch(() => {});
+
+  buildLevels();
+  updateHintMenu();
+}
+
+function updateGoogleAccountUI(user){
+  const bar = document.getElementById("googleAccountBar");
+  if(!bar) return;
+
+  if(user && !user.isAnonymous){
+    bar.classList.add("show");
+    document.getElementById("googleUserName").textContent = user.displayName || "مستخدم Google";
+    document.getElementById("googleUserEmail").textContent = user.email || "";
+    const photo = document.getElementById("googleUserPhoto");
+    if(user.photoURL){
+      photo.src = user.photoURL;
+      photo.style.display = "block";
+    }else{
+      photo.style.display = "none";
+    }
+  }else{
+    bar.classList.remove("show");
+  }
+}
+
+window.loginWithGoogle = async function(){
+  const message = document.getElementById("googleAuthMessage");
+  if(message) message.textContent = "";
+
+  try{
+    const result = await signInWithPopup(auth, googleProvider);
+    const progress = await loadGoogleProgress(result.user);
+
+    window.googleProgress.currentUser = result.user;
+    updateGoogleAccountUI(result.user);
+
+    if(progress){
+      await applyGoogleProgress(progress);
+    }else{
+      await saveGoogleProgress();
+    }
+
+    sessionStorage.removeItem("skipGoogleLoginForSession");
+    document.getElementById("googleAuthOverlay")?.classList.remove("show");
+    openLevelsImmediately();
+  }catch(error){
+    if(message){
+      message.textContent =
+        error?.code === "auth/popup-blocked"
+          ? "اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى."
+          : "تعذر تسجيل الدخول بحساب Google.";
+    }
+  }
+};
+
+window.logoutGoogleAccount = async function(){
+  try{ await saveGoogleProgress(); }catch(error){}
+  try{ await signOut(auth); }catch(error){}
+
+  window.googleProgress.currentUser = null;
+  updateGoogleAccountUI(null);
+  sessionStorage.removeItem("skipGoogleLoginForSession");
+  goHome();
+};
+
+window.googleProgress.save = saveGoogleProgress;
+window.googleProgress.load = loadGoogleProgress;
+
+onAuthStateChanged(auth, async user => {
+  const googleUser = user && !user.isAnonymous ? user : null;
+  window.googleProgress.currentUser = googleUser;
+  updateGoogleAccountUI(googleUser);
+
+  if(googleUser){
+    const progress = await loadGoogleProgress(googleUser);
+    if(progress) await applyGoogleProgress(progress);
+  }
+});
+
+
 window.firebaseGame = {
   sessionId,
   hostOnline,
@@ -6284,6 +6477,17 @@ window.firebaseGame = {
       </button>
     </div>
   </section>
+
+
+  <div id="googleAuthOverlay" class="google-auth-overlay" role="dialog" aria-modal="true">
+    <div class="google-auth-card">
+      <h2>حفظ تقدم الفردي</h2>
+      <p>سجّل دخولك بحساب Google لحفظ المراحل والتلميحات واستعادتها من أي جهاز.</p>
+      <button class="google-login-btn" type="button" onclick="loginWithGoogle()">الدخول باستخدام Google</button>
+      <button class="google-skip-btn" type="button" onclick="continueWithoutGoogle()">المتابعة بدون حساب</button>
+      <p id="googleAuthMessage" style="margin-top:12px;color:#b42318"></p>
+    </div>
+  </div>
 
 </body>
 </html>
