@@ -3487,16 +3487,17 @@ button,input,select{
 }
 
 
-/* v85 — التلميح أسفل اللمبة دون تغطية الإجابة */
+/* v86 — التلميح بجانب اللمبة تحت الإجابة */
 .individual-hint-stack{
   display:none;
 }
 
 .individual-game .individual-hint-stack{
+  direction:rtl;
   width:min(92%,620px);
-  margin:16px auto 24px;
+  margin:-2px auto 18px;
   display:flex;
-  flex-direction:column;
+  flex-direction:row;
   align-items:center;
   justify-content:center;
   gap:10px;
@@ -3505,7 +3506,8 @@ button,input,select{
 }
 
 .individual-game .individual-hint-stack .hint-btn{
-  display:block !important;
+  order:1;
+  display:flex !important;
   position:static !important;
   inset:auto !important;
   left:auto !important;
@@ -3516,30 +3518,34 @@ button,input,select{
   margin:0 !important;
   width:58px !important;
   height:58px !important;
+  min-width:58px !important;
   flex:0 0 58px;
+  align-items:center;
+  justify-content:center;
 }
 
 .individual-game .individual-hint-stack .active-hint-banner{
+  order:2;
   position:static !important;
   inset:auto !important;
   left:auto !important;
   right:auto !important;
   top:auto !important;
   bottom:auto !important;
-  transform:translateY(-5px) !important;
-  width:100% !important;
-  max-width:560px;
+  transform:translateX(6px) !important;
+  width:min(100%,500px) !important;
   min-height:58px !important;
   margin:0 !important;
   opacity:0;
   visibility:hidden;
   pointer-events:none;
+  flex:1 1 auto;
 }
 
 .individual-game .individual-hint-stack .active-hint-banner.show{
   opacity:1 !important;
   visibility:visible !important;
-  transform:translateY(0) !important;
+  transform:translateX(0) !important;
   pointer-events:auto;
 }
 
@@ -3559,26 +3565,45 @@ button,input,select{
 @media(max-width:560px){
   .individual-game .individual-hint-stack{
     width:calc(100% - 20px);
-    margin-top:12px;
-    margin-bottom:18px;
+    margin-top:-4px;
+    margin-bottom:14px;
     gap:8px;
   }
 
+  .individual-game .individual-hint-stack .hint-btn{
+    width:52px !important;
+    height:52px !important;
+    min-width:52px !important;
+    flex-basis:52px;
+  }
+
   .individual-game .individual-hint-stack .active-hint-banner{
-    width:100% !important;
-    min-height:54px !important;
-    padding:9px 12px !important;
+    min-width:0;
+    min-height:52px !important;
+    padding:8px 10px !important;
   }
 
   .individual-game .individual-hint-stack .active-hint-banner strong{
-    font-size:16px;
+    font-size:15px;
   }
 
   .individual-game .individual-hint-stack .active-hint-banner small{
-    font-size:14px;
+    font-size:13px;
   }
 }
 
+@media(max-width:360px){
+  .individual-game .individual-hint-stack{
+    gap:6px;
+  }
+
+  .individual-game .individual-hint-stack .hint-btn{
+    width:48px !important;
+    height:48px !important;
+    min-width:48px !important;
+    flex-basis:48px;
+  }
+}
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
