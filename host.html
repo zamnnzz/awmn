@@ -902,7 +902,10 @@ onValue(sessionRef, snapshot => {
     lastRenderedVisualKey = "";
   }
   currentQuestion = incomingQuestion;
-  totalQuestions = 4;
+  totalQuestions = Math.max(
+    1,
+    Number(data.state?.totalQuestions) || totalQuestions
+  );
   hostShowingAnswer = data.state?.answerVisible === true;
 
   const team1 = document.getElementById("team1");
