@@ -3604,6 +3604,21 @@ button,input,select{
     flex-basis:48px;
   }
 }
+
+/* v88 — ضمان ظهور مربعات الإجابة في الفردي */
+#gamePage.individual-game #answerArea{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+
+#gamePage.individual-game #answerBoxes{
+  display:flex !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  min-height:62px;
+}
+
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -4110,63 +4125,73 @@ button,input,select{
       return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
     }
 
-const questionBank = [
-  { imageUrl: "img/1.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/2.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/3.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/4.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/5.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/6.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/7.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/8.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/9.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/10.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/11.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/12.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/13.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/14.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/15.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/16.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/17.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/18.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/19.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/20.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/21.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/22.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/23.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/24.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/25.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/26.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/27.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/28.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/29.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/30.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/31.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/32.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/33.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/34.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/35.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/36.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/37.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/38.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/39.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/40.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/41.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/42.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/43.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/44.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/45.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/46.png", answer: "مهند", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/47.png", answer: "ريف", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/48.png", answer: "عزه", hint: "اسم بنت", language: "عربي" },
-  { imageUrl: "img/49.png", answer: "تركي", hint: "اسم ولد", language: "عربي" },
-  { imageUrl: "img/50.png", answer: "مهند", hint: "اسم ولد", language: "عربي" }
-];
+    const questionBank = [
+      { imageUrl: "img/1.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/2.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/3.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/4.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/5.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/6.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/7.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/8.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/9.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/10.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/11.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/12.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/13.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/14.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/15.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/16.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/17.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/18.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/19.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/20.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/21.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/22.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/23.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/24.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/25.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/26.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/27.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/28.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/29.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/30.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/31.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/32.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/33.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/34.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/35.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/36.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/37.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/38.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/39.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/40.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/41.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/42.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/43.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/44.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/45.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/46.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" },
+      { imageUrl: "img/47.png", answer: "ريف", hint: "اسم قصير من ثلاثة أحرف", language: "عربي" },
+      { imageUrl: "img/48.png", answer: "عزه", hint: "اسم يبدأ بحرف العين", language: "عربي" },
+      { imageUrl: "img/49.png", answer: "تركي", hint: "اسم يبدأ بحرف التاء", language: "عربي" },
+      { imageUrl: "img/50.png", answer: "مهند", hint: "اسم يبدأ بحرف الميم", language: "عربي" }
+    ];
+    unlockedLevel = Math.min(
+      Math.max(1, questionBank.length),
+      Math.max(1, unlockedLevel)
+    );
 
-unlockedLevel = Math.min(
-  Math.max(1, questionBank.length),
-  Math.max(1, unlockedLevel)
-);
+
+    function escapeHtml(value){
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#39;"
+      })[character]);
+    }
 
     function buildQuestionVisual(question){
       const imageUrl = escapeHtml(question?.imageUrl || "");
@@ -4942,11 +4967,20 @@ unlockedLevel = Math.min(
     function buildAnswerBoxes(answer){
       const container = document.getElementById("answerBoxes");
       const feedback = document.getElementById("answerFeedback");
-      const letters = [...answer];
+      const safeAnswer = String(answer || "").trim();
+      const letters = [...safeAnswer];
 
       container.innerHTML = "";
       container.dir = "rtl";
       feedback.textContent = "";
+
+      if(letters.length === 0){
+        feedback.textContent = "لم تتم كتابة إجابة لهذا السؤال داخل questionBank";
+        feedback.style.color = "#b42318";
+        return;
+      }
+
+      feedback.style.color = "";
 
       letters.forEach((_, index) => {
         const input = document.createElement("input");
@@ -6084,6 +6118,17 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
+/*
+  انتظر استعادة جلسة Google المحفوظة قبل أي دخول مجهول.
+  هذا يمنع استبدال حساب Google بحساب Anonymous عند فتح الصفحة أو استعادة الاتصال.
+*/
+const initialAuthReady = new Promise(resolve => {
+  const stopInitialAuthObserver = onAuthStateChanged(auth, user => {
+    stopInitialAuthObserver();
+    resolve(user || null);
+  });
+});
+
 function randomSessionId() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let result = "";
@@ -6129,7 +6174,16 @@ function setHostOnlineState(online){
 }
 
 async function ensureAuth() {
-  if(auth.currentUser) return auth.currentUser;
+  const restoredUser = await initialAuthReady;
+
+  if(auth.currentUser){
+    return auth.currentUser;
+  }
+
+  if(restoredUser){
+    return restoredUser;
+  }
+
   const credential = await signInAnonymously(auth);
   return credential.user;
 }
