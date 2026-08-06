@@ -4110,63 +4110,37 @@ button,input,select{
       return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
     }
 
-   const questionBank = [
-  { imageUrl: "img/1.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/2.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/3.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/4.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/5.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/6.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/7.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/8.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/9.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/10.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/11.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/12.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/13.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/14.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/15.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/16.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/17.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/18.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/19.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/20.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/21.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/22.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/23.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/24.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/25.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/26.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/27.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/28.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/29.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/30.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/31.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/32.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/33.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/34.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/35.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/36.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/37.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/38.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/39.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/40.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/41.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/42.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/43.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/44.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/45.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/46.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/47.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/48.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/49.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/50.png", answer: "", hint: "", language: "عربي" }
-];
+    const questionBank = [
+      {
+        imageUrl: makeEmojiImage("🍯"),
+        answer: "عسل",
+        hint: "مادة حلوة يصنعها النحل",
+        language: "عربي"
+      },
+      {
+        imageUrl: makeEmojiImage("🌙", "#e9f1ff"),
+        answer: "قمر",
+        hint: "يظهر في السماء ليلًا",
+        language: "عربي"
+      },
+      {
+        imageUrl: makeEmojiImage("☀️", "#fff1a8"),
+        answer: "شمس",
+        hint: "تضيء الأرض في النهار",
+        language: "عربي"
+      },
+      {
+        imageUrl: makeEmojiImage("📖", "#edf8e8"),
+        answer: "كتاب",
+        hint: "نقرأ منه ونتعلم",
+        language: "عربي"
+      }
+    ];
+    unlockedLevel = Math.min(
+      Math.max(1, questionBank.length),
+      Math.max(1, unlockedLevel)
+    );
 
-unlockedLevel = Math.min(
-  Math.max(1, questionBank.length),
-  Math.max(1, unlockedLevel)
-);
 
     function escapeHtml(value){
       return String(value ?? "").replace(/[&<>"']/g, character => ({
@@ -5923,6 +5897,69 @@ unlockedLevel = Math.min(
       }
     });
 
+
+    /*
+      جسر حفظ التقدم:
+      progress.js يستخدم هذه الواجهة فقط ولا يغيّر منطق اللعب أو الجماعي.
+    */
+    window.gameProgressBridge = {
+      getState(){
+        return {
+          unlockedLevel: Math.max(1, Number(unlockedLevel) || 1),
+          hintBalances: JSON.parse(JSON.stringify(hintBalances || {})),
+          hintCooldowns: JSON.parse(JSON.stringify(hintCooldowns || {})),
+          fastAnswerProgress: Math.max(0, Number(fastAnswerProgress) || 0),
+          fastAnswerTarget: Math.max(1, Number(fastAnswerTarget) || 3)
+        };
+      },
+
+      applyState(progress){
+        if(!progress || typeof progress !== "object") return false;
+
+        const maxLevel = Math.max(1, questionBank.length);
+
+        unlockedLevel = Math.min(
+          maxLevel,
+          Math.max(1, Number(progress.unlockedLevel) || 1)
+        );
+
+        if(progress.hintBalances && typeof progress.hintBalances === "object"){
+          hintBalances = {
+            ...hintBalances,
+            ...progress.hintBalances
+          };
+        }
+
+        if(progress.hintCooldowns && typeof progress.hintCooldowns === "object"){
+          hintCooldowns = {
+            ...hintCooldowns,
+            ...progress.hintCooldowns
+          };
+        }
+
+        fastAnswerProgress = Math.max(
+          0,
+          Number(progress.fastAnswerProgress) || 0
+        );
+
+        fastAnswerTarget = Math.max(
+          1,
+          Number(progress.fastAnswerTarget) || 3
+        );
+
+        localStorage.setItem("unlockedLevel", String(unlockedLevel));
+        localStorage.setItem("hintBalances", JSON.stringify(hintBalances));
+        localStorage.setItem("hintCooldowns", JSON.stringify(hintCooldowns));
+        localStorage.setItem("fastAnswerProgress", String(fastAnswerProgress));
+        localStorage.setItem("fastAnswerTarget", String(fastAnswerTarget));
+
+        try{ buildLevels(); }catch(error){}
+        try{ updateHintMenu(); }catch(error){}
+
+        return true;
+      }
+    };
+
 </script>
 
   
@@ -6567,6 +6604,8 @@ window.firebaseGame = {
   }
 };
 </script>
+<script type="module" src="progress.js"></script>
+
 
 
   <div id="buzzerWinnerBanner" style="
