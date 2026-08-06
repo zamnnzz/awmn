@@ -13,6 +13,8 @@ import {
   getDatabase,
   ref,
   get,
+  onValue,
+  runTransaction,
   update
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
 
@@ -34,8 +36,11 @@ const db = getDatabase(app);
 let activeUser = null;
 let ready = false;
 let applyingRemote = false;
-let lastSavedState = "";
-let saveTimer = null;
+let saveInProgress = false;
+let saveQueued = false;
+let stopRealtimeListener = null;
+let fallbackTimer = null;
+let lastSerializedState = "";
 
 function getBridge(){
   return window.gameProgressBridge || null;
@@ -68,6 +73,31 @@ function serializeState(state){
   return JSON.stringify(normalizeState(state));
 }
 
+function mergeRemoteIntoLocal(localState, remoteState){
+  const local = normalizeState(localState);
+  const remote = normalizeState(remoteState);
+
+  return {
+    // المرحلة الأعلى هي المعتمدة دائمًا ولا يمكن أن ترجع للخلف.
+    unlockedLevel: Math.max(
+      local.unlockedLevel,
+      remote.unlockedLevel
+    ),
+
+    // القيم الأخرى تأخذ النسخة الأحدث القادمة من Firebase.
+    hintBalances: remote.hintBalances || local.hintBalances,
+    hintCooldowns: remote.hintCooldowns || local.hintCooldowns,
+    fastAnswerProgress: Math.max(
+      local.fastAnswerProgress,
+      remote.fastAnswerProgress
+    ),
+    fastAnswerTarget: Math.max(
+      local.fastAnswerTarget,
+      remote.fastAnswerTarget
+    )
+  };
+}
+
 async function saveProgress(force = false){
   if(!ready || applyingRemote || !activeUser || activeUser.isAnonymous){
     return false;
@@ -76,87 +106,183 @@ async function saveProgress(force = false){
   const bridge = getBridge();
   if(!bridge?.getState) return false;
 
-  const progress = normalizeState(bridge.getState());
-  const serialized = serializeState(progress);
+  if(saveInProgress){
+    saveQueued = true;
+    return false;
+  }
 
-  if(!force && serialized === lastSavedState){
+  const localProgress = normalizeState(bridge.getState());
+  const serialized = serializeState(localProgress);
+
+  if(!force && serialized === lastSerializedState){
     return true;
   }
 
+  saveInProgress = true;
+  saveQueued = false;
+
   try{
-    await update(ref(db, `users/${activeUser.uid}`), {
-      profile: {
+    const progressRef = ref(
+      db,
+      `users/${activeUser.uid}/progress`
+    );
+
+    const result = await runTransaction(
+      progressRef,
+      currentValue => {
+        const remote = normalizeState(currentValue || {});
+
+        return {
+          ...localProgress,
+          unlockedLevel: Math.max(
+            localProgress.unlockedLevel,
+            remote.unlockedLevel
+          ),
+          updatedAt: Date.now()
+        };
+      },
+      {applyLocally: false}
+    );
+
+    const savedProgress = normalizeState(
+      result.snapshot.val() || localProgress
+    );
+
+    // إذا كان Firebase يحتوي على مرحلة أعلى، طبقها محليًا.
+    if(savedProgress.unlockedLevel > localProgress.unlockedLevel){
+      applyingRemote = true;
+      try{
+        bridge.applyState(savedProgress);
+      }finally{
+        applyingRemote = false;
+      }
+    }
+
+    await update(
+      ref(db, `users/${activeUser.uid}/profile`),
+      {
         name: activeUser.displayName || "",
         email: activeUser.email || "",
         photoURL: activeUser.photoURL || ""
-      },
-      progress: {
-        ...progress,
-        updatedAt: Date.now()
       }
-    });
+    );
 
-    lastSavedState = serialized;
-    setAccountStatus("تم تسجيل الدخول — تقدمك محفوظ");
+    lastSerializedState = serializeState(bridge.getState());
+    setAccountStatus("تم تسجيل الدخول — تقدمك محفوظ ومتزامن");
     return true;
   }catch(error){
     console.error("Progress save failed:", error);
-    setAccountStatus("تعذر الحفظ السحابي — التقدم محفوظ على هذا الجهاز");
+    setAccountStatus(
+      "تعذر الحفظ السحابي — التقدم محفوظ على هذا الجهاز"
+    );
     return false;
+  }finally{
+    saveInProgress = false;
+
+    if(saveQueued){
+      saveQueued = false;
+      setTimeout(() => {
+        saveProgress(true).catch(() => {});
+      }, 80);
+    }
   }
 }
 
-async function loadProgress(user){
+function applyRemoteProgress(remoteValue){
+  if(!activeUser || applyingRemote) return;
+
   const bridge = getBridge();
+  if(!bridge?.getState || !bridge?.applyState) return;
+
+  const local = normalizeState(bridge.getState());
+  const remote = normalizeState(remoteValue || {});
+  const merged = mergeRemoteIntoLocal(local, remote);
+
+  if(serializeState(merged) === serializeState(local)){
+    lastSerializedState = serializeState(local);
+    return;
+  }
+
+  applyingRemote = true;
+  try{
+    bridge.applyState(merged);
+    lastSerializedState = serializeState(bridge.getState());
+    setAccountStatus("تم تحديث تقدمك من جهاز آخر");
+  }finally{
+    applyingRemote = false;
+  }
+}
+
+async function connectUser(user){
+  const bridge = getBridge();
+
   if(!bridge?.getState || !bridge?.applyState){
     throw new Error("Game progress bridge is unavailable");
   }
 
-  const snapshot = await get(ref(db, `users/${user.uid}/progress`));
+  const progressRef = ref(
+    db,
+    `users/${user.uid}/progress`
+  );
+
+  const snapshot = await get(progressRef);
 
   if(snapshot.exists()){
-    applyingRemote = true;
-    try{
-      bridge.applyState(normalizeState(snapshot.val()));
-    }finally{
-      applyingRemote = false;
-    }
-
-    lastSavedState = serializeState(bridge.getState());
-    setAccountStatus("تم تسجيل الدخول — تمت استعادة تقدمك");
+    applyRemoteProgress(snapshot.val());
   }else{
-    lastSavedState = "";
     ready = true;
     await saveProgress(true);
   }
-}
 
-function startWatching(){
-  clearInterval(saveTimer);
+  if(stopRealtimeListener){
+    stopRealtimeListener();
+  }
 
-  saveTimer = setInterval(() => {
+  stopRealtimeListener = onValue(
+    progressRef,
+    snapshotValue => {
+      if(snapshotValue.exists()){
+        applyRemoteProgress(snapshotValue.val());
+      }
+    },
+    error => {
+      console.error("Realtime progress listener failed:", error);
+      setAccountStatus("تعذر التحديث اللحظي");
+    }
+  );
+
+  clearInterval(fallbackTimer);
+  fallbackTimer = setInterval(() => {
     saveProgress(false).catch(() => {});
-  }, 1500);
+  }, 10000);
 }
 
 onAuthStateChanged(auth, async user => {
+  if(stopRealtimeListener){
+    stopRealtimeListener();
+    stopRealtimeListener = null;
+  }
+
+  clearInterval(fallbackTimer);
+  fallbackTimer = null;
+
   activeUser = user && !user.isAnonymous ? user : null;
   ready = false;
-  clearInterval(saveTimer);
+  lastSerializedState = "";
 
   if(!activeUser){
-    lastSavedState = "";
     return;
   }
 
   try{
-    await loadProgress(activeUser);
+    await connectUser(activeUser);
   }catch(error){
-    console.error("Progress load failed:", error);
-    setAccountStatus("تعذر استعادة التقدم — سيستمر الحفظ المحلي");
+    console.error("Progress connection failed:", error);
+    setAccountStatus(
+      "تعذر ربط التقدم — سيستمر الحفظ المحلي"
+    );
   }finally{
     ready = true;
-    startWatching();
   }
 });
 
@@ -166,6 +292,16 @@ window.addEventListener("pagehide", () => {
 
 window.addEventListener("online", () => {
   saveProgress(true).catch(() => {});
+});
+
+window.addEventListener("focus", () => {
+  saveProgress(true).catch(() => {});
+});
+
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "visible"){
+    saveProgress(true).catch(() => {});
+  }
 });
 
 window.gameCloudProgress = {

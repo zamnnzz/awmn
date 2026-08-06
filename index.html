@@ -3980,7 +3980,7 @@ button,input,select{
           <input id="settingsTeamTwo" class="setting-input" type="text" maxlength="24" />
         </label><label class="setting-field" for="questionCountInput">
         عدد الأسئلة
-        <input id="questionCountInput" class="setting-input" type="number" min="1" max="50" value="10" />
+        <input id="questionCountInput" class="setting-input" type="number" min="10" max="50" value="10" />
       </label>
   </section>
 
@@ -4181,6 +4181,30 @@ button,input,select{
       Math.max(1, questionBank.length),
       Math.max(1, unlockedLevel)
     );
+
+    function getConfiguredGroupQuestionCount(){
+      const maximum = Math.max(1, questionBank.length);
+      const minimum = Math.min(10, maximum);
+      const stored = Number(localStorage.getItem("groupQuestionCount")) || minimum;
+
+      return Math.min(
+        maximum,
+        Math.max(minimum, stored)
+      );
+    }
+
+    function saveConfiguredGroupQuestionCount(value){
+      const maximum = Math.max(1, questionBank.length);
+      const minimum = Math.min(10, maximum);
+      const safeValue = Math.min(
+        maximum,
+        Math.max(minimum, Number(value) || minimum)
+      );
+
+      localStorage.setItem("groupQuestionCount", String(safeValue));
+      return safeValue;
+    }
+
 
 
     function escapeHtml(value){
@@ -4723,8 +4747,11 @@ button,input,select{
       }
       if(mode === "group"){
         const savedQuestion = Number(localStorage.getItem("activeGroupQuestion")) || 1;
-        currentQuestion = Math.min(questionBank.length, Math.max(1, savedQuestion));
-        totalQuestions = Math.max(1, questionBank.length);
+        totalQuestions = getConfiguredGroupQuestionCount();
+        currentQuestion = Math.min(
+          totalQuestions,
+          Math.max(1, savedQuestion)
+        );
         renderGroupQuestion();
       }else{
         currentQuestion = Math.min(
@@ -4933,7 +4960,7 @@ button,input,select{
 
       return {
         question: Number(currentQuestion) || 1,
-        totalQuestions: Math.max(1, questionBank.length),
+        totalQuestions: getConfiguredGroupQuestionCount(),
         visualHtml: buildQuestionVisual(question),
         answerVisualHtml: createAnswerVisualHtml(question.answer),
         answer: question.answer,
@@ -5109,7 +5136,9 @@ button,input,select{
     function rewardRandomHintAfterTwoAnswers(){
       fastAnswerProgress += 1;
       localStorage.setItem("fastAnswerProgress", String(fastAnswerProgress));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
       localStorage.setItem("fastAnswerTarget", String(fastAnswerTarget));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
 
       if(fastAnswerProgress < fastAnswerTarget){
         return;
@@ -5120,6 +5149,7 @@ button,input,select{
 
       localStorage.setItem("fastAnswerProgress", "0");
       localStorage.setItem("fastAnswerTarget", String(fastAnswerTarget));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
 
       const availableTypes = ["language","text","letter"].filter(type => {
         return hintBalances[type] < hintMaxBalances[type];
@@ -5195,6 +5225,7 @@ button,input,select{
           currentLevel + 1
         );
         localStorage.setItem("unlockedLevel", String(unlockedLevel));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
         buildLevels();
         setTimeout(playUnlockSound, 300);
       }
@@ -5235,11 +5266,15 @@ button,input,select{
     });
 
     localStorage.setItem("hintBalances", JSON.stringify(hintBalances));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
     localStorage.setItem("hintCooldowns", JSON.stringify(hintCooldowns));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
 
     function saveHintBalances(){
       localStorage.setItem("hintBalances", JSON.stringify(hintBalances));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
       localStorage.setItem("hintCooldowns", JSON.stringify(hintCooldowns));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
     }
 
     function formatHintTime(totalSeconds){
@@ -5463,7 +5498,13 @@ button,input,select{
         document.getElementById("gameTeamTwo").textContent ||
         "الفريق الثاني";
 
-      questionCountInput.value = totalQuestions;
+      questionCountInput.min = String(Math.min(10, questionBank.length));
+      questionCountInput.max = String(questionBank.length);
+      questionCountInput.value = String(
+        currentGameMode === "group"
+          ? getConfiguredGroupQuestionCount()
+          : getConfiguredGroupQuestionCount()
+      );
 
       const buzzerEnabledInput = document.getElementById("buzzerEnabledInput");
       const storedBuzzerEnabled = localStorage.getItem("buzzerEnabled");
@@ -5534,12 +5575,18 @@ button,input,select{
     function saveSettings(){
       const note = document.getElementById("settingsNote");
       const countInput = document.getElementById("questionCountInput");
-      const newCount = Math.max(1, Math.min(50, Number(countInput.value) || 10));
+      const newCount = saveConfiguredGroupQuestionCount(
+        countInput.value
+      );
 
-      totalQuestions = newCount;
-      localStorage.setItem("totalQuestions", String(totalQuestions));
-      document.getElementById("questionProgress").textContent =
-        Math.min(currentQuestion, totalQuestions) + "/" + totalQuestions;
+      if(currentGameMode === "group"){
+        totalQuestions = newCount;
+      }
+      if(currentGameMode === "group"){
+        currentQuestion = Math.min(currentQuestion, totalQuestions);
+        document.getElementById("questionProgress").textContent =
+          currentQuestion + "/" + totalQuestions;
+      }
 
       if(currentGameMode === "group"){
         const teamOne = document.getElementById("settingsTeamOne").value.trim();
@@ -5587,7 +5634,10 @@ button,input,select{
       }
 
       note.style.color = "#16833b";
-      note.textContent = "تم حفظ الإعدادات";
+      note.textContent =
+        currentGameMode === "group"
+          ? "تم حفظ الإعدادات — عدد الأسئلة: " + totalQuestions
+          : "تم حفظ الإعدادات";
       setTimeout(closeSettings, 650);
     }
 
@@ -5998,10 +6048,15 @@ button,input,select{
         );
 
         localStorage.setItem("unlockedLevel", String(unlockedLevel));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
         localStorage.setItem("hintBalances", JSON.stringify(hintBalances));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
         localStorage.setItem("hintCooldowns", JSON.stringify(hintCooldowns));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
         localStorage.setItem("fastAnswerProgress", String(fastAnswerProgress));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
         localStorage.setItem("fastAnswerTarget", String(fastAnswerTarget));
+        window.gameCloudProgress?.saveNow?.().catch(() => {});
 
         try{ buildLevels(); }catch(error){}
         try{ updateHintMenu(); }catch(error){}
@@ -6371,9 +6426,12 @@ function attachSessionListeners(activeId){
     const state = snapshot.val();
     if(!state) return;
 
-    totalQuestions = Math.max(
-      1,
-      Number(state.totalQuestions) || questionBank.length
+    totalQuestions = Math.min(
+      questionBank.length,
+      Math.max(
+        Math.min(10, questionBank.length),
+        Number(state.totalQuestions) || getConfiguredGroupQuestionCount()
+      )
     );
 
     const incomingQuestion = Math.min(
@@ -6449,7 +6507,18 @@ async function createSession(teamOne, teamTwo, forceNew = false) {
         hostConnectionHandled = false;
         attachSessionListeners(savedId);
 
-      currentQuestion = Math.min(Math.max(1, Number(savedState.totalQuestions) || questionBank.length), Math.max(1, Number(savedState.question) || 1));
+      totalQuestions = Math.min(
+        questionBank.length,
+        Math.max(
+          Math.min(10, questionBank.length),
+          Number(savedState.totalQuestions) || getConfiguredGroupQuestionCount()
+        )
+      );
+
+      currentQuestion = Math.min(
+        totalQuestions,
+        Math.max(1, Number(savedState.question) || 1)
+      );
       localStorage.setItem("activeGroupQuestion", String(currentQuestion));
 
       // النبضة الحديثة فقط تعني أن صفحة الهوست مفتوحة.
