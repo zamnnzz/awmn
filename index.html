@@ -3486,6 +3486,99 @@ button,input,select{
   .levels-account-header img{width:42px;height:42px}
 }
 
+
+/* v85 — التلميح أسفل اللمبة دون تغطية الإجابة */
+.individual-hint-stack{
+  display:none;
+}
+
+.individual-game .individual-hint-stack{
+  width:min(92%,620px);
+  margin:16px auto 24px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  position:relative;
+  z-index:7;
+}
+
+.individual-game .individual-hint-stack .hint-btn{
+  display:block !important;
+  position:static !important;
+  inset:auto !important;
+  left:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  top:auto !important;
+  transform:none !important;
+  margin:0 !important;
+  width:58px !important;
+  height:58px !important;
+  flex:0 0 58px;
+}
+
+.individual-game .individual-hint-stack .active-hint-banner{
+  position:static !important;
+  inset:auto !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+  transform:translateY(-5px) !important;
+  width:100% !important;
+  max-width:560px;
+  min-height:58px !important;
+  margin:0 !important;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+.individual-game .individual-hint-stack .active-hint-banner.show{
+  opacity:1 !important;
+  visibility:visible !important;
+  transform:translateY(0) !important;
+  pointer-events:auto;
+}
+
+.individual-game.hint-active .individual-hint-stack .hint-btn,
+.individual-game.hint-active .individual-hint-stack .active-hint-banner{
+  position:static !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  bottom:auto !important;
+}
+
+.individual-game .game-layout{
+  padding-bottom:0 !important;
+}
+
+@media(max-width:560px){
+  .individual-game .individual-hint-stack{
+    width:calc(100% - 20px);
+    margin-top:12px;
+    margin-bottom:18px;
+    gap:8px;
+  }
+
+  .individual-game .individual-hint-stack .active-hint-banner{
+    width:100% !important;
+    min-height:54px !important;
+    padding:9px 12px !important;
+  }
+
+  .individual-game .individual-hint-stack .active-hint-banner strong{
+    font-size:16px;
+  }
+
+  .individual-game .individual-hint-stack .active-hint-banner small{
+    font-size:14px;
+  }
+}
+
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -3777,7 +3870,18 @@ button,input,select{
     </div>
 
     <div id="questionProgress" class="question-progress">1/10</div>
-    <button class="hint-btn" type="button" onclick="openHintMenu()" aria-label="تلميح">💡</button>
+
+    <div class="individual-hint-stack">
+      <button class="hint-btn" type="button" onclick="openHintMenu()" aria-label="تلميح">💡</button>
+
+      <div id="activeHintBanner" class="active-hint-banner" aria-live="polite">
+        <span id="activeHintIcon">💡</span>
+        <span>
+          <strong id="activeHintTitle">التلميح</strong>
+          <small id="activeHintText"></small>
+        </span>
+      </div>
+    </div>
   </section>
 
 
@@ -3816,14 +3920,6 @@ button,input,select{
 
       <button class="hint-close-btn" type="button" onclick="closeHintMenu()" aria-label="إغلاق">×</button>
     </div>
-  </div>
-
-  <div id="activeHintBanner" class="active-hint-banner" aria-live="polite">
-    <span id="activeHintIcon">💡</span>
-    <span>
-      <strong id="activeHintTitle">التلميح</strong>
-      <small id="activeHintText"></small>
-    </span>
   </div>
 
   <div id="settingsOverlay" class="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
@@ -3989,63 +4085,37 @@ button,input,select{
       return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
     }
 
-   const questionBank = [
-  { imageUrl: "img/1.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/2.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/3.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/4.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/5.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/6.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/7.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/8.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/9.png",  answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/10.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/11.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/12.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/13.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/14.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/15.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/16.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/17.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/18.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/19.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/20.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/21.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/22.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/23.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/24.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/25.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/26.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/27.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/28.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/29.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/30.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/31.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/32.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/33.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/34.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/35.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/36.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/37.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/38.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/39.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/40.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/41.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/42.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/43.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/44.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/45.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/46.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/47.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/48.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/49.png", answer: "", hint: "", language: "عربي" },
-  { imageUrl: "img/50.png", answer: "", hint: "", language: "عربي" }
-];
+    const questionBank = [
+      {
+        imageUrl: makeEmojiImage("🍯"),
+        answer: "عسل",
+        hint: "مادة حلوة يصنعها النحل",
+        language: "عربي"
+      },
+      {
+        imageUrl: makeEmojiImage("🌙", "#e9f1ff"),
+        answer: "قمر",
+        hint: "يظهر في السماء ليلًا",
+        language: "عربي"
+      },
+      {
+        imageUrl: makeEmojiImage("☀️", "#fff1a8"),
+        answer: "شمس",
+        hint: "تضيء الأرض في النهار",
+        language: "عربي"
+      },
+      {
+        imageUrl: makeEmojiImage("📖", "#edf8e8"),
+        answer: "كتاب",
+        hint: "نقرأ منه ونتعلم",
+        language: "عربي"
+      }
+    ];
+    unlockedLevel = Math.min(
+      Math.max(1, questionBank.length),
+      Math.max(1, unlockedLevel)
+    );
 
-unlockedLevel = Math.min(
-  Math.max(1, questionBank.length),
-  Math.max(1, unlockedLevel)
-);
 
     function escapeHtml(value){
       return String(value ?? "").replace(/[&<>"']/g, character => ({
