@@ -3405,6 +3405,87 @@ button,input,select{
   .individual-game .picture-card{aspect-ratio:1.25/1;}
 }
 
+
+/* v84 — حساب المستخدم داخل عنوان المراحل */
+.levels-account-header{
+  width:min(92%,620px);
+  margin:10px auto 20px;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  border:3px solid #111;
+  border-radius:18px;
+  background:#fff8d8;
+  box-shadow:0 5px 0 #111;
+  cursor:pointer;
+  user-select:none;
+}
+.levels-account-header img{
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid #111;
+  display:none;
+}
+.levels-account-copy{
+  min-width:0;
+  text-align:center;
+}
+.levels-account-copy strong{
+  display:block;
+  font-size:21px;
+  font-weight:900;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.levels-account-copy small{
+  display:block;
+  margin-top:3px;
+  font-size:14px;
+  font-weight:800;
+  opacity:.72;
+}
+.levels-account-header.signed-in{
+  background:#d8f7df;
+}
+.levels-account-header.signed-in img{
+  display:block;
+}
+.levels-account-logout{
+  display:none;
+  min-height:38px;
+  padding:0 12px;
+  border:2px solid #111;
+  border-radius:10px;
+  background:#ffd9d9;
+  font-weight:900;
+  cursor:pointer;
+}
+.levels-account-header.signed-in .levels-account-logout{
+  display:block;
+}
+.google-login-message{
+  width:min(92%,620px);
+  min-height:24px;
+  margin:-10px auto 12px;
+  text-align:center;
+  font-weight:900;
+  color:#b42318;
+}
+@media(max-width:560px){
+  .levels-account-header{
+    padding:10px 11px;
+    gap:9px;
+  }
+  .levels-account-copy strong{font-size:18px}
+  .levels-account-copy small{font-size:12px}
+  .levels-account-header img{width:42px;height:42px}
+}
+
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -3470,6 +3551,26 @@ button,input,select{
       <button class="back-btn" type="button" onclick="goHome()" aria-label="رجوع">↩</button>
       <h1>المراحل</h1>
     </header>
+    <div id="levelsAccountHeader"
+         class="levels-account-header"
+         role="button"
+         tabindex="0"
+         onclick="handleLevelsAccountClick(event)"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleLevelsAccountClick(event)}">
+      <img id="levelsAccountPhoto" alt="صورة المستخدم">
+      <div class="levels-account-copy">
+        <strong id="levelsAccountName">سجّل لحفظ تقدمك</strong>
+        <small id="levelsAccountSubtitle">اضغط لتسجيل الدخول بحساب Google</small>
+      </div>
+      <button id="levelsLogoutButton"
+              class="levels-account-logout"
+              type="button"
+              onclick="event.stopPropagation();logoutLevelsGoogle()">
+        خروج
+      </button>
+    </div>
+    <div id="googleLoginMessage" class="google-login-message" aria-live="polite"></div>
+
 
     <div id="levelsGrid" class="levels-grid" aria-label="قائمة المراحل"></div>
   </section>
@@ -4189,6 +4290,26 @@ button,input,select{
         });
       }
     }
+
+
+    window.handleLevelsAccountClick = async function handleLevelsAccountClick(event){
+      if(event?.target?.closest?.("#levelsLogoutButton")) return;
+
+      const authBridge = window.levelsGoogleAuth;
+      if(!authBridge) return;
+
+      if(authBridge.currentUser) return;
+
+      try{
+        await authBridge.login();
+      }catch(error){}
+    };
+
+    window.logoutLevelsGoogle = async function logoutLevelsGoogle(){
+      try{
+        await window.levelsGoogleAuth?.logout?.();
+      }catch(error){}
+    };
 
     function openLevels(){
       gamePage.classList.remove("active");
@@ -5753,7 +5874,7 @@ button,input,select{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import {
   getDatabase, ref, set, update, onValue, get, goOnline, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
@@ -6176,6 +6297,90 @@ async function restoreSession(savedId){
     hostOnline: onlineNow
   };
 }
+
+
+const levelsGoogleProvider = new GoogleAuthProvider();
+levelsGoogleProvider.setCustomParameters({prompt:"select_account"});
+
+function updateLevelsAccountHeader(user){
+  const header = document.getElementById("levelsAccountHeader");
+  const name = document.getElementById("levelsAccountName");
+  const subtitle = document.getElementById("levelsAccountSubtitle");
+  const photo = document.getElementById("levelsAccountPhoto");
+
+  if(!header || !name || !subtitle || !photo) return;
+
+  const googleUser = user && !user.isAnonymous ? user : null;
+
+  if(googleUser){
+    header.classList.add("signed-in");
+    name.textContent = googleUser.displayName || "مستخدم Google";
+    subtitle.textContent = "تم تسجيل الدخول — تقدمك محفوظ";
+    if(googleUser.photoURL){
+      photo.src = googleUser.photoURL;
+      photo.style.display = "block";
+    }else{
+      photo.removeAttribute("src");
+      photo.style.display = "none";
+    }
+  }else{
+    header.classList.remove("signed-in");
+    name.textContent = "سجّل لحفظ تقدمك";
+    subtitle.textContent = "اضغط لتسجيل الدخول بحساب Google";
+    photo.removeAttribute("src");
+    photo.style.display = "none";
+  }
+}
+
+window.levelsGoogleAuth = {
+  currentUser: null,
+
+  async login(){
+    const message = document.getElementById("googleLoginMessage");
+    if(message) message.textContent = "";
+
+    try{
+      const result = await signInWithPopup(auth, levelsGoogleProvider);
+      this.currentUser = result.user;
+      updateLevelsAccountHeader(result.user);
+      return result.user;
+    }catch(error){
+      console.error("Google login error:", error);
+      const code = String(error?.code || "");
+      let text = "تعذر تسجيل الدخول بحساب Google.";
+
+      if(code === "auth/popup-blocked"){
+        text = "المتصفح منع نافذة Google. اسمح بالنوافذ المنبثقة.";
+      }else if(code === "auth/popup-closed-by-user"){
+        text = "أُغلقت نافذة Google قبل اكتمال التسجيل.";
+      }else if(code === "auth/unauthorized-domain"){
+        text = "نطاق الموقع غير مصرح في Firebase.";
+      }else if(code === "auth/operation-not-allowed"){
+        text = "تسجيل Google غير مفعّل في Firebase.";
+      }else if(code === "auth/network-request-failed"){
+        text = "تعذر الاتصال. تحقق من الإنترنت.";
+      }
+
+      if(message) message.textContent = text;
+      throw error;
+    }
+  },
+
+  async logout(){
+    try{
+      await signOut(auth);
+    }finally{
+      this.currentUser = null;
+      updateLevelsAccountHeader(null);
+    }
+  }
+};
+
+onAuthStateChanged(auth, user => {
+  const googleUser = user && !user.isAnonymous ? user : null;
+  window.levelsGoogleAuth.currentUser = googleUser;
+  updateLevelsAccountHeader(googleUser);
+});
 
 window.firebaseGame = {
   sessionId,
