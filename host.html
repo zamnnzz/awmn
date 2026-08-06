@@ -962,6 +962,20 @@ onValue(sessionRef, snapshot => {
     }
   }
 });
+
+function syncHostQuestionTotal(){
+  const progressCandidates = [
+    document.getElementById("hostQuestionProgress"),
+    document.getElementById("questionProgress"),
+    document.getElementById("hostQuestionNumber")
+  ].filter(Boolean);
+
+  progressCandidates.forEach(element => {
+    const questionNumber = Math.max(1, Number(currentQuestion) || 1);
+    element.textContent = "السؤال " + questionNumber + " / " + totalQuestions;
+  });
+}
+
 </script>
 
 </body>
