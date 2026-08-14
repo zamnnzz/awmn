@@ -3660,12 +3660,13 @@ button,input,select{
       </div>
 
       <div class="actions">
-        <button class="mode-btn single" type="button" onclick="openLevels()">
+        <button class="mode-btn single" type="button" disabled aria-disabled="true" style="position:relative;cursor:not-allowed;opacity:.78;">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="7" r="4"/>
             <path d="M4 21v-2c0-4.4 3.6-8 8-8s8 3.6 8 8v2z"/>
           </svg>
           <span>فردي</span>
+          <span style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border:2px solid #fff;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.28);">قريبًا</span>
         </button>
 
         <button class="mode-btn group" type="button" onclick="openGroupSetup()">
